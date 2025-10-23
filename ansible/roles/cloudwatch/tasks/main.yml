@@ -1,0 +1,50 @@
+---
+- name: Download CloudWatch agent
+  get_url:
+    url: https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+    dest: /tmp/amazon-cloudwatch-agent.deb
+
+- name: Install CloudWatch agent
+  apt:
+    deb: /tmp/amazon-cloudwatch-agent.deb
+
+- name: Configure CloudWatch agent
+  copy:
+    content: |
+      {
+        "metrics": {
+          "metrics_collected": {
+            "cpu": {
+              "measurement": [
+                "cpu_usage_idle",
+                "cpu_usage_user",
+                "cpu_usage_system"
+              ],
+              "metrics_collection_interval": 60,
+              "totalcpu": false
+            },
+            "mem": {
+              "measurement": [
+                "mem_used_percent"
+              ],
+              "metrics_collection_interval": 60
+            },
+            "disk": {
+              "measurement": [
+                "used_percent"
+              ],
+              "metrics_collection_interval": 60,
+              "resources": [
+                "/"
+              ]
+            }
+          }
+        }
+      }
+    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+
+- name: Start CloudWatch agent
+  systemd:
+    name: amazon-cloudwatch-agent
+    state: started
+    enabled: yes
