@@ -1,9 +1,37 @@
+# Generate SSH key pair locally
+resource "tls_private_key" "jenkins" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Create AWS key pair from the generated public key
+resource "aws_key_pair" "jenkins" {
+  key_name   = "${var.project_name}-jenkins-key"
+  public_key = tls_private_key.jenkins.public_key_openssh
+}
+
+# Save private key to local file
+resource "local_file" "private_key" {
+  content  = tls_private_key.jenkins.private_key_pem
+  filename = "${path.module}/../../../ssh-keys/jenkins-private-key.pem"
+  file_permission = "0400"
+}
+
+# Generate Ansible inventory file automatically
+resource "local_file" "ansible_inventory" {
+  content = templatefile("${path.module}/templates/inventory.tpl", {
+    jenkins_ip = aws_instance.jenkins.public_ip
+    key_path   = local_file.private_key.filename
+  })
+  filename = "${path.module}/../../../ansible/inventory.ini"
+}
+
 resource "aws_instance" "jenkins" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t3.medium"
   subnet_id              = var.public_subnets[0]
   vpc_security_group_ids = [aws_security_group.jenkins.id]
-  key_name               = aws_key_pair.jenkins.key_name
+  key_name               = aws_key_pair.jenkins.key_name  # Use the generated key
   iam_instance_profile   = aws_iam_instance_profile.jenkins.name
 
   root_block_device {
@@ -16,9 +44,10 @@ resource "aws_instance" "jenkins" {
   tags = {
     Name = "${var.project_name}-jenkins"
   }
+
+  depends_on = [aws_key_pair.jenkins]
 }
 
-# Get latest Ubuntu AMI
 # Get latest Ubuntu AMI
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -44,7 +73,6 @@ data "aws_ami" "ubuntu" {
     values = ["x86_64"]
   }
 }
-
 
 # Security Group for Jenkins
 resource "aws_security_group" "jenkins" {
@@ -78,12 +106,6 @@ resource "aws_security_group" "jenkins" {
   tags = {
     Name = "${var.project_name}-jenkins-sg"
   }
-}
-
-# SSH Key Pair
-resource "aws_key_pair" "jenkins" {
-  key_name   = "${var.project_name}-jenkins-key"
-  public_key = file("~/.ssh/id_rsa.pub") # Update path to your public key
 }
 
 # IAM Role for Jenkins

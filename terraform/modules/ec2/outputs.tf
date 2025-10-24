@@ -12,3 +12,14 @@ output "jenkins_security_group_id" {
   description = "Jenkins security group ID"
   value       = aws_security_group.jenkins.id
 }
+
+
+output "private_key_path" {
+  description = "Path to generated private key"
+  value       = local_file.private_key.filename
+}
+
+output "ansible_inventory_path" {
+  description = "Path to generated Ansible inventory"
+  value       = local_file.ansible_inventory.filename
+}

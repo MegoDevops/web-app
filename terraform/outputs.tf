@@ -42,3 +42,14 @@ output "jenkins_url" {
   description = "Jenkins server URL"
   value       = "http://${module.ec2.jenkins_public_ip}:8080"
 }
+
+output "jenkins_private_key_path" {
+  description = "Path to Jenkins private key"
+  value       = module.ec2.private_key_path
+  sensitive   = true
+}
+
+output "ansible_inventory_path" {
+  description = "Path to generated Ansible inventory"
+  value       = module.ec2.ansible_inventory_path
+}

@@ -1,4 +1,4 @@
-form core directories ===
+# === Terraform core directories ===
 .terraform/
 .terraform.lock.hcl
 
@@ -34,15 +34,35 @@ Thumbs.db
 *.key
 *.crt
 
+# === SSH Keys (private / public) ===
+ssh-keys/
+*.pem
+*.key
+*.pub
+
 # === GitHub Actions & CI/CD temp ===
-# Workflow runner temp directories
 .github/workflows/*.tmp
 .github/workflows/*.log
 .github/workflows/.cache/
 .github/workflows/.terraform/
 .github/workflows/.aws/
-
-# === Lock & cache ===
 *.lock
 *.cache
 
+# === Ansible inventory files ===
+ansible/inventory.ini
+ansible/inventory/
+ansible/host_vars/
+ansible/group_vars/
+*.retry
+# === Ansible vault files ===
+*.vault
+*.vault.yml
+*.vault.yaml
+# === Ansible temporary files ===
+ansible/.vagrant/
+ansible/.cache/
+ansible/.ansible/
+ansible/__pycache__/
+ansible/*.log
+ansible/*.tmp

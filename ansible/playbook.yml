@@ -2,8 +2,7 @@
 - name: Configure Jenkins Server
   hosts: jenkins
   become: yes
-  vars:
-    jenkins_version: "2.440"
+  
     
   roles:
     - role: jenkins

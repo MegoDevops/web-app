@@ -1,5 +1,5 @@
 [jenkins]
-51.44.221.113 ansible_ssh_private_key_file=/home/mego/.ssh/jenkins-private-key.pem
+${jenkins_ip} ansible_ssh_private_key_file=${key_path}
 
 [all:vars]
 ansible_user=ubuntu
