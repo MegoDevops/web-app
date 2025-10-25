@@ -29,3 +29,35 @@ A complete **CI/CD pipeline and cloud infrastructure** project deploying the [ga
 - **Cloud Provider**: AWS
 
 ## 📁 Project Structure
+nti-project/
+├── terraform/ # Infrastructure as Code
+│ ├── main.tf # Main Terraform configuration
+│ ├── variables.tf # Variable definitions
+│ ├── outputs.tf # Output values
+│ └── modules/ # Reusable Terraform modules
+│ ├── networking/ # VPC, subnets, routing
+│ ├── eks/ # EKS cluster configuration
+│ ├── ec2/ # Jenkins EC2 instance
+│ ├── ecr/ # Container repositories
+│ └── s3/ # S3 buckets for logs and state
+├── ansible/ # Configuration Management
+│ ├── playbook.yml # Main Ansible playbook
+│ ├── inventory.ini # Dynamic inventory
+│ └── roles/
+│ ├── jenkins/ # Jenkins installation & configuration
+│ └── cloudwatch/ # CloudWatch agent setup
+├── kubernetes/ # Kubernetes manifests
+│ ├── base/ # Base Kubernetes resources
+│ │ ├── namespace.yaml
+│ │ ├── web/ # Frontend deployment & service
+│ │ ├── api/ # Backend deployment & service
+│ │ ├── postgres/ # Database statefulset
+│ │ ├── redis/ # Redis deployment
+│ │ └── network-policies/ # Security policies
+│ └── helm/ # Helm charts (future use)
+├── web-app-example/ # Application source code
+│ ├── web/ # React frontend
+│ ├── api/ # Node.js backend
+│ └── docker-compose.yml # Local development
+└── ssh-keys/ # Automatically generated SSH keys
+
