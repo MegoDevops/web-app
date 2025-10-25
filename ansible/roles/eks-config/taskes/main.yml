@@ -1,0 +1,50 @@
+---
+- name: Check if EKS cluster exists
+  shell: |
+    aws eks describe-cluster --region eu-west-3 --name garden-web-app-cluster --query 'cluster.status' --output text
+  environment:
+    AWS_DEFAULT_REGION: eu-west-3
+  become_user: ubuntu
+  register: cluster_check
+  failed_when: cluster_check.rc != 0
+  changed_when: false
+
+- name: Wait for EKS cluster to be active (with timeout)
+  shell: |
+    timeout 600 bash -c 'until aws eks describe-cluster --region eu-west-3 --name garden-web-app-cluster --query "cluster.status" --output text | grep -q "ACTIVE"; do echo "Waiting for EKS cluster..."; sleep 30; done'
+    echo "EKS cluster is ACTIVE"
+  environment:
+    AWS_DEFAULT_REGION: eu-west-3
+  become_user: ubuntu
+  register: cluster_wait
+  failed_when: cluster_wait.rc != 0
+
+- name: Configure kubectl for EKS
+  shell: |
+    aws eks update-kubeconfig --region eu-west-3 --name garden-web-app-cluster --kubeconfig /home/ubuntu/.kube/config
+  environment:
+    AWS_DEFAULT_REGION: eu-west-3
+  become_user: ubuntu
+
+- name: Set proper permissions for kubeconfig
+  file:
+    path: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Test Kubernetes cluster access
+  shell: |
+    kubectl cluster-info
+    kubectl get nodes
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+  become_user: ubuntu
+  register: k8s_test
+  retries: 5
+  delay: 30
+  until: k8s_test.rc == 0
+
+- name: Display Kubernetes cluster info
+  debug:
+    msg: "Kubernetes access successful!\n{{ k8s_test.stdout }}"

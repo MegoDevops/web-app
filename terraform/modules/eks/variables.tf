@@ -17,3 +17,9 @@ variable "jenkins_security_group_id" {
   description = "Jenkins security group ID for EKS access"
   type        = string
 }
+
+
+variable "vpc_id" {
+  description = "VPC ID for EKS cluster"
+  type        = string
+}

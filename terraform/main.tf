@@ -56,13 +56,14 @@ module "ec2" {
   public_subnets = module.networking.public_subnet_ids
 }
 
-# EKS Module
+
 # EKS Module
 module "eks" {
   source = "./modules/eks"
   
   project_name             = var.project_name
   private_subnets          = module.networking.private_subnet_ids
-  public_subnets           = module.networking.public_subnet_ids  # Add this line
-  jenkins_security_group_id = module.ec2.jenkins_security_group_id  # Add this line
+  public_subnets           = module.networking.public_subnet_ids  
+  jenkins_security_group_id = module.ec2.jenkins_security_group_id  
+  vpc_id                    = module.networking.vpc_id
 }

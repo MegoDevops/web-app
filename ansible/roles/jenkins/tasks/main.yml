@@ -4,9 +4,9 @@
     update_cache: yes
     cache_valid_time: 3600
 
-- name: Install Java
+- name: Install Java 11 (Jenkins compatible)
   apt:
-    name: openjdk-17-jdk
+    name: openjdk-11-jdk  # ✅ CORRECT VERSION
     state: present
 
 - name: Add Jenkins repository key
@@ -30,21 +30,35 @@
   apt:
     name: 
       - docker.io
-      - docker-compose
+      - docker-compose-plugin  # ✅ Use new docker-compose plugin
       - curl
       - gnupg
       - software-properties-common
       - unzip
     state: present
 
-- name: Update AWS CLI to v2 (for better EKS support)
+- name: Remove AWS CLI v1 if exists
+  apt:
+    name: awscli
+    state: absent
+  ignore_errors: yes
+
+- name: Install AWS CLI v2 (correct method)
   shell: |
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    sudo ./aws/install --update
+    unzip -q awscliv2.zip
+    sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
     rm -rf awscliv2.zip aws/
   args:
-    creates: /usr/local/bin/aws2
+    creates: /usr/local/bin/aws
+
+- name: Install aws-iam-authenticator for EKS
+  shell: |
+    curl -Lo aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
+    sudo mv aws-iam-authenticator /usr/local/bin/
+    sudo chmod +x /usr/local/bin/aws-iam-authenticator
+  args:
+    creates: /usr/local/bin/aws-iam-authenticator
 
 - name: Add ubuntu user to docker group
   user:
@@ -55,7 +69,8 @@
 - name: Install kubectl
   shell: |
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    rm kubectl
   args:
     creates: /usr/local/bin/kubectl
 
@@ -93,124 +108,3 @@
     owner: ubuntu
     group: ubuntu
     mode: '0755'
-
-- name: Wait for EKS cluster to be ready
-  shell: |
-    until aws eks describe-cluster --region eu-west-3 --name garden-web-app-cluster --query 'cluster.status' --output text | grep -q "ACTIVE"; do
-      echo "Waiting for EKS cluster to be active..."
-      sleep 10
-    done
-    echo "EKS cluster is active"
-  environment:
-    HOME: /home/ubuntu
-  become_user: ubuntu
-  register: cluster_wait
-  failed_when: cluster_wait.rc != 0
-
-- name: Display cluster wait result
-  debug:
-    msg: "{{ cluster_wait.stdout }}"
-
-- name: Configure kubectl for EKS using AWS CLI v2
-  shell: |
-    aws eks update-kubeconfig --region eu-west-3 --name garden-web-app-cluster --kubeconfig /home/ubuntu/.kube/config
-  environment:
-    HOME: /home/ubuntu
-    AWS_DEFAULT_REGION: eu-west-3
-  become_user: ubuntu
-  register: kubeconfig_result
-
-- name: Display kubeconfig result
-  debug:
-    msg: "{{ kubeconfig_result.stdout }}"
-
-- name: Set proper permissions for kubeconfig
-  file:
-    path: /home/ubuntu/.kube/config
-    owner: ubuntu
-    group: ubuntu
-    mode: '0600'
-
-- name: Verify kubectl configuration
-  shell: kubectl config view
-  environment:
-    KUBECONFIG: /home/ubuntu/.kube/config
-  become_user: ubuntu
-  register: kubectl_config
-  failed_when: kubectl_config.rc != 0
-
-- name: Display kubectl config
-  debug:
-    msg: "Kubectl configuration:\n{{ kubectl_config.stdout }}"
-
-- name: Test Kubernetes cluster access with retry
-  shell: kubectl get nodes --request-timeout=30s
-  environment:
-    KUBECONFIG: /home/ubuntu/.kube/config
-  become_user: ubuntu
-  register: k8s_test
-  retries: 5
-  delay: 10
-  until: k8s_test.rc == 0
-
-- name: Display Kubernetes cluster info
-  debug:
-    msg: "Kubernetes nodes:\n{{ k8s_test.stdout }}"
-
-- name: Install CloudWatch agent
-  apt:
-    name: amazon-cloudwatch-agent
-    state: present
-
-- name: Configure CloudWatch agent
-  copy:
-    content: |
-      {
-        "metrics": {
-          "metrics_collected": {
-            "cpu": {
-              "measurement": [
-                "cpu_usage_idle",
-                "cpu_usage_user",
-                "cpu_usage_system"
-              ],
-              "metrics_collection_interval": 60,
-              "totalcpu": false
-            },
-            "mem": {
-              "measurement": [
-                "mem_used_percent"
-              ],
-              "metrics_collection_interval": 60
-            },
-            "disk": {
-              "measurement": [
-                "used_percent"
-              ],
-              "metrics_collection_interval": 60,
-              "resources": [
-                "/"
-              ]
-            }
-          }
-        }
-      }
-    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
-    owner: root
-    group: root
-    mode: '0644'
-
-- name: Start CloudWatch agent
-  systemd:
-    name: amazon-cloudwatch-agent
-    state: started
-    enabled: yes
-
-- name: Verify CloudWatch agent status
-  systemd:
-    name: amazon-cloudwatch-agent
-  register: cloudwatch_status
-
-- name: Display CloudWatch agent status
-  debug:
-    msg: "CloudWatch agent is {{ 'running' if cloudwatch_status.status.ActiveState == 'active' else 'not running' }}"
