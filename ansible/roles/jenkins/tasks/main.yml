@@ -76,3 +76,62 @@
 - name: Display Jenkins admin password
   debug:
     msg: "Jenkins initial admin password: {{ jenkins_password.stdout }}"
+
+- name: Configure kubectl for EKS
+  shell: |
+    aws eks update-kubeconfig --region eu-west-3 --name garden-web-app-cluster
+  args:
+    creates: /home/ubuntu/.kube/config
+
+- name: Test Kubernetes access
+  shell: kubectl get nodes
+  register: k8s_test
+  failed_when: k8s_test.rc != 0
+
+- name: Display Kubernetes test result
+  debug:
+    msg: "{{ k8s_test.stdout }}"
+
+
+- name: Install AWS IAM Authenticator for EKS
+  shell: |
+    curl -o aws-iam-authenticator https://github.com/kubernetes-sigs/aws-iam-authenticator/releases/download/v0.5.9/aws-iam-authenticator_0.5.9_linux_amd64
+    sudo mv aws-iam-authenticator /usr/local/bin/
+    sudo chmod +x /usr/local/bin/aws-iam-authenticator
+  args:
+    creates: /usr/local/bin/aws-iam-authenticator
+
+- name: Create .kube directory
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Configure kubectl for EKS cluster
+  shell: |
+    aws eks update-kubeconfig --region eu-west-3 --name garden-web-app-cluster
+  environment:
+    HOME: /home/ubuntu
+  become_user: ubuntu
+
+- name: Set proper permissions for kubeconfig
+  file:
+    path: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Test Kubernetes cluster access
+  shell: kubectl get nodes
+  environment:
+    HOME: /home/ubuntu
+    KUBECONFIG: /home/ubuntu/.kube/config
+  become_user: ubuntu
+  register: k8s_test
+  failed_when: k8s_test.rc != 0
+
+- name: Display Kubernetes cluster info
+  debug:
+    msg: "{{ k8s_test.stdout }}"

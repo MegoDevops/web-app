@@ -55,3 +55,11 @@ module "ec2" {
   vpc_id         = module.networking.vpc_id
   public_subnets = module.networking.public_subnet_ids
 }
+
+# EKS Module
+module "eks" {
+  source = "./modules/eks"
+  
+  project_name    = var.project_name
+  private_subnets = module.networking.private_subnet_ids
+}

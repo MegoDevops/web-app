@@ -53,3 +53,18 @@ output "ansible_inventory_path" {
   description = "Path to generated Ansible inventory"
   value       = module.ec2.ansible_inventory_path
 }
+
+output "eks_cluster_id" {
+  description = "EKS cluster ID"
+  value       = module.eks.cluster_id
+}
+
+output "eks_cluster_endpoint" {
+  description = "EKS cluster endpoint"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_name" {
+  description = "EKS cluster name"
+  value       = module.eks.cluster_name
+}
