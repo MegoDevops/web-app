@@ -106,3 +106,26 @@ resource "aws_iam_role_policy_attachment" "ec2_container_registry_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.eks_node_group.name
 }
+
+
+# Security group rule for EKS API access (HTTPS)
+resource "aws_security_group_rule" "eks_https" {
+  description       = "Allow HTTPS access to EKS API"
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+}
+
+# Security group rule for Jenkins to EKS access
+resource "aws_security_group_rule" "eks_jenkins_https" {
+  description              = "Allow Jenkins to access EKS API"
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  source_security_group_id = var.jenkins_security_group_id
+  security_group_id        = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+}

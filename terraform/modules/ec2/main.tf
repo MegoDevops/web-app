@@ -13,7 +13,7 @@ resource "aws_key_pair" "jenkins" {
 # Save private key to local file
 resource "local_file" "private_key" {
   content  = tls_private_key.jenkins.private_key_pem
-  filename = "/home/mego/.ssh/jenkins-private-key.pem"
+  filename = "${path.module}/../../ssh-keys/jenkins-private-key-2.pem"
   file_permission = "0400"
 }
 
@@ -144,4 +144,34 @@ resource "aws_iam_role_policy_attachment" "jenkins_eks" {
 resource "aws_iam_instance_profile" "jenkins" {
   name = "${var.project_name}-jenkins-profile"
   role = aws_iam_role.jenkins.name
+}
+
+
+# Add this policy attachment to the existing IAM role section
+resource "aws_iam_role_policy_attachment" "jenkins_eks_describe" {
+  role       = aws_iam_role.jenkins.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+# Add a custom policy for EKS access
+resource "aws_iam_role_policy" "jenkins_eks_access" {
+  name = "${var.project_name}-jenkins-eks-access"
+  role = aws_iam_role.jenkins.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "eks:AccessKubernetesApi",
+          "eks:ListUpdates",
+          "eks:ListFargateProfiles"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
