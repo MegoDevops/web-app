@@ -23,3 +23,8 @@ output "ansible_inventory_path" {
   description = "Path to generated Ansible inventory"
   value       = local_file.ansible_inventory.filename
 }
+
+output "jenkins_iam_role_arn" {
+  description = "Jenkins IAM role ARN"
+  value       = aws_iam_role.jenkins.arn
+}

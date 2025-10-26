@@ -4,10 +4,17 @@
     update_cache: yes
     cache_valid_time: 3600
 
-- name: Install Java 11 (Jenkins compatible)
+- name: Install Java 17 (Jenkins requirement)
   apt:
-    name: openjdk-11-jdk  # ✅ CORRECT VERSION
+    name: openjdk-17-jdk
     state: present
+
+- name: Set Java 17 as default
+  shell: |
+    update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-17-openjdk-amd64/bin/java 1
+    update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+  args:
+    creates: /etc/alternatives/java
 
 - name: Add Jenkins repository key
   apt_key:
@@ -30,12 +37,18 @@
   apt:
     name: 
       - docker.io
-      - docker-compose-plugin  # ✅ Use new docker-compose plugin
+      - python3-pip
       - curl
       - gnupg
       - software-properties-common
       - unzip
     state: present
+
+- name: Install docker-compose via pip
+  pip:
+    name: docker-compose
+    state: present
+    executable: pip3
 
 - name: Remove AWS CLI v1 if exists
   apt:
@@ -66,6 +79,12 @@
     groups: docker
     append: yes
 
+- name: Add jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+
 - name: Install kubectl
   shell: |
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -80,6 +99,18 @@
   args:
     creates: /usr/local/bin/helm
 
+- name: Configure Jenkins to use Java 17
+  lineinfile:
+    path: /etc/default/jenkins
+    regexp: '^JAVA_HOME='
+    line: 'JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64'
+    backup: yes
+
+- name: Reset Jenkins failed service counter
+  shell: |
+    sudo systemctl reset-failed jenkins
+  failed_when: false
+
 - name: Start and enable Jenkins
   systemd:
     name: jenkins
@@ -93,18 +124,38 @@
     state: started
     timeout: 120
 
-- name: Get Jenkins initial admin password
+- name: Check if Jenkins admin password exists
+  stat:
+    path: /var/lib/jenkins/secrets/initialAdminPassword
+  register: jenkins_password_file
+
+- name: Get Jenkins initial admin password (if exists)
   shell: cat /var/lib/jenkins/secrets/initialAdminPassword
   register: jenkins_password
+  when: jenkins_password_file.stat.exists
 
-- name: Display Jenkins admin password
+- name: Display Jenkins admin password or completion message
   debug:
-    msg: "Jenkins initial admin password: {{ jenkins_password.stdout }}"
-
-- name: Create .kube directory
+    msg: |
+      {% if jenkins_password_file.stat.exists %}
+      Jenkins initial admin password: {{ jenkins_password.stdout }}
+      {% else %}
+      Jenkins already setup - password file was consumed during web setup
+      Access Jenkins at: http://{{ ansible_host }}:8080
+      {% endif %}
+      
+- name: Create .kube directory for ubuntu user
   file:
     path: /home/ubuntu/.kube
     state: directory
     owner: ubuntu
     group: ubuntu
+    mode: '0755'
+
+- name: Create .kube directory for jenkins user
+  file:
+    path: /var/lib/jenkins/.kube
+    state: directory
+    owner: jenkins
+    group: jenkins
     mode: '0755'

@@ -23,3 +23,8 @@ variable "vpc_id" {
   description = "VPC ID for EKS cluster"
   type        = string
 }
+
+variable "jenkins_iam_role_arn" {
+  description = "Jenkins IAM role ARN for EKS access"
+  type        = string
+}

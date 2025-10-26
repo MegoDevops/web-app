@@ -1,9 +1,9 @@
 ---
-- name: Configure Jenkins Server
+- name: Configure Jenkins Server and EKS Access
   hosts: jenkins
   become: yes
   
-    
   roles:
     - role: jenkins
     - role: cloudwatch
+    - role: eks-config  # ✅ ADD THIS LINE

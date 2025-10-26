@@ -108,7 +108,7 @@ resource "aws_security_group" "jenkins" {
   }
 }
 
-# IAM Role for Jenkins
+# IAM Role for Jenkins EC2 (ONLY JENKINS-SPECIFIC!)
 resource "aws_iam_role" "jenkins" {
   name = "${var.project_name}-jenkins-role"
 
@@ -136,30 +136,7 @@ resource "aws_iam_role_policy_attachment" "jenkins_s3" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "jenkins_eks" {
-  role       = aws_iam_role.jenkins.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
-
-resource "aws_iam_instance_profile" "jenkins" {
-  name = "${var.project_name}-jenkins-profile"
-  role = aws_iam_role.jenkins.name
-}
-
-# Additional policy for EKS authentication
-resource "aws_iam_role_policy_attachment" "jenkins_eks_auth" {
-  role       = aws_iam_role.jenkins.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-
-
-# Allow Jenkins EC2 to assume the EKS node role
-resource "aws_iam_role_policy_attachment" "eks_node_group_extra" {
-  role       = aws_iam_role.eks_node_group.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-# Create a specific policy for Jenkins to describe EKS clusters
+# CORRECTED: Use EKS Describe policy instead of WorkerNodePolicy
 resource "aws_iam_policy" "jenkins_eks_describe" {
   name        = "${var.project_name}-jenkins-eks-describe"
   description = "Allow Jenkins to describe EKS clusters"
@@ -184,17 +161,7 @@ resource "aws_iam_role_policy_attachment" "jenkins_eks_describe" {
   policy_arn = aws_iam_policy.jenkins_eks_describe.arn
 }
 
-resource "aws_iam_role" "eks_node_group" {
-  name = "${var.project_name}-eks-node-group-role"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
+resource "aws_iam_instance_profile" "jenkins" {
+  name = "${var.project_name}-jenkins-profile"
+  role = aws_iam_role.jenkins.name
 }
