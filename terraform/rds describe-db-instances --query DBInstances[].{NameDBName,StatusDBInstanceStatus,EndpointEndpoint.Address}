@@ -1,0 +1,67 @@
+{
+    "cluster": {
+        "name": "garden-web-app-cluster",
+        "arn": "arn:aws:eks:eu-west-3:964711978492:cluster/garden-web-app-cluster",
+        "createdAt": "2025-10-28T21:33:54.784000+03:00",
+        "version": "1.30",
+        "endpoint": "https://3624FE3AC328A353F83011A2BD15B344.gr7.eu-west-3.eks.amazonaws.com",
+        "roleArn": "arn:aws:iam::964711978492:role/garden-web-app-eks-cluster-role",
+        "resourcesVpcConfig": {
+            "subnetIds": [
+                "subnet-002355f8f8b2d7dfd",
+                "subnet-0cb164393966b76ae"
+            ],
+            "securityGroupIds": [
+                "sg-073e16402417c7760"
+            ],
+            "clusterSecurityGroupId": "sg-0e70025252c39bf58",
+            "vpcId": "vpc-054bb4ce7dbd56704",
+            "endpointPublicAccess": true,
+            "endpointPrivateAccess": true,
+            "publicAccessCidrs": [
+                "0.0.0.0/0"
+            ]
+        },
+        "kubernetesNetworkConfig": {
+            "serviceIpv4Cidr": "172.20.0.0/16",
+            "ipFamily": "ipv4",
+            "elasticLoadBalancing": {
+                "enabled": false
+            }
+        },
+        "logging": {
+            "clusterLogging": [
+                {
+                    "types": [
+                        "api",
+                        "audit",
+                        "authenticator",
+                        "controllerManager",
+                        "scheduler"
+                    ],
+                    "enabled": false
+                }
+            ]
+        },
+        "identity": {
+            "oidc": {
+                "issuer": "https://oidc.eks.eu-west-3.amazonaws.com/id/3624FE3AC328A353F83011A2BD15B344"
+            }
+        },
+        "status": "ACTIVE",
+        "certificateAuthority": {
+            "data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURCVENDQWUyZ0F3SUJBZ0lJQzB0Q2FnWStwVzh3RFFZSktvWklodmNOQVFFTEJRQXdGVEVUTUJFR0ExVUUKQXhNS2EzVmlaWEp1WlhSbGN6QWVGdzB5TlRFd01qZ3hPRE0wTXpKYUZ3MHpOVEV3TWpZeE9ETTVNekphTUJVeApFekFSQmdOVkJBTVRDbXQxWW1WeWJtVjBaWE13Z2dFaU1BMEdDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLCkFvSUJBUUNncElQNU1OV1VhMEZZVWZPb21kZC9JQ1pPYkdmMHpZcG5JVGNpVWdrcUFTZ1puT0libHZRMVRadncKL3h3d1hBVmdaSWU0MXJpeVBoMmw0MVhVcFpFVVZiSnBOak8wQlBVeHBLaU83WnAyakpvMmsvZ0RzTUNNS1lxZQpKN0JvdEE1V1BmTnZGMndkT213WVA1UVBCcWtCTU1zNGxhTVFaSjdndyt5c1dHWWJCUzZNQmc3bms0TEtvT21yCmlRWVZDWDlyL3U4ZlNPTjFLbUIvZHM3Z2FDeU5rbE1JSURENStlRVdmeFNkVnVabmM2ak1BQVBJVzIyRzhPRncKaEcyMmlYT1VKbGlJT3pDMk5heXROQzl4UGc3VXFDM25PTi9ldHp6dVZtZE5tNTdHTERTck83SUxFMCtFUTZmcgpweUo2Q0pxMFRaZkNwVTJzZkhtRmdZRmVXWklIQWdNQkFBR2pXVEJYTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQCkJnTlZIUk1CQWY4RUJUQURBUUgvTUIwR0ExVWREZ1FXQkJTVmtZalhFTXBmVnRIenN4ejRBY0hENmdUa1REQVYKQmdOVkhSRUVEakFNZ2dwcmRXSmxjbTVsZEdWek1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQi96N1c4eEgwcwpGUUlqUDdzMHcrR2JSS1BXL0dXS2Yvc3pZbHlxOERmUEpOdVRGWTY4dWtOK2RPZ0xSdjg2WkhTbCtRaTV4bUJWCmVnUHliUktwbW9TcjF0Zm1abnlpc082cEFYeWorR2tBVVY3Qm9pcDJXL2lCSmRObG9EVFBoQjJ5THNtNG9NRUUKVEdiVExEOW85aGN0b29iOUFXejRzRWJWc05CUENkYnhuSFNRa3N3RE11Nm1CVHgxMG9kQzNxc2tFMVc1VXI2OQpYOVoyOXhnczhWd09ReGhhWFhoUU5tMkFPSlpJSURlRy9QOXRDV09BOFY3bWhYQ096ZWFUcGg4cUI3MWJUaUJ2CkFvNmxaTWgwSjNCNlRkai80NlgxblFWOUJrSHg0WWxnUHhFMm5qRXY3RjBET0JuZG0wektsbkRZdnBuLzBNVHoKYXpoVEc3cUJGaE1yCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+        },
+        "platformVersion": "eks.50",
+        "tags": {
+            "Name": "garden-web-app-eks-cluster"
+        },
+        "accessConfig": {
+            "authenticationMode": "CONFIG_MAP"
+        },
+        "upgradePolicy": {
+            "supportType": "EXTENDED"
+        },
+        "deletionProtection": false
+    }
+}

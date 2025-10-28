@@ -11,12 +11,10 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-
-  # Only create if EKS cluster exists
-  alias = "eks"
+  alias                  = "eks"
 }
 
-# Add Jenkins EC2 to EKS aws-auth configmap
+# Manage aws-auth ConfigMap safely
 resource "kubernetes_config_map" "aws_auth" {
   provider = kubernetes.eks
 
@@ -41,7 +39,7 @@ resource "kubernetes_config_map" "aws_auth" {
   }
 
   lifecycle {
-    ignore_changes = [data]
+    ignore_changes = [data, metadata]
   }
 
   depends_on = [
