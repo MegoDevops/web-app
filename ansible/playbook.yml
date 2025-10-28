@@ -6,4 +6,4 @@
   roles:
     - role: jenkins
     - role: cloudwatch
-    - role: eks-config  # ✅ ADD THIS LINE
+    - role: eks-config  

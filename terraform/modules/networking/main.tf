@@ -103,3 +103,30 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+
+
+# Security Group for RDS (PostgreSQL)
+resource "aws_security_group" "db" {
+  name        = "${var.project_name}-db-sg"
+  description = "Allow PostgreSQL access within the VPC"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # فقط من داخل نفس الـ VPC
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-db-sg"
+  }
+}

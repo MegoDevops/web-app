@@ -68,3 +68,38 @@ module "eks" {
   vpc_id                    = module.networking.vpc_id
   jenkins_iam_role_arn      = module.ec2.jenkins_iam_role_arn 
 }
+
+
+
+# IAM Role for Backup
+resource "aws_iam_role" "backup_role" {
+  name = "${var.project_name}-backup-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = { Service = "backup.amazonaws.com" }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "backup_policy" {
+  role       = aws_iam_role.backup_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+}
+
+
+# RDS Module for PostgreSQL database
+module "rds" {
+  source             = "./modules/rds"
+  project_name       = var.project_name
+  db_name            = "garden"
+  db_user            = "postgres"
+  db_password        = "password123!"
+  private_subnets    = module.networking.private_subnet_ids
+
+  db_security_group  = module.networking.db_sg_id
+  jenkins_ec2_arn    = module.ec2.jenkins_arn
+  backup_role_arn    = aws_iam_role.backup_role.arn
+}

@@ -13,6 +13,11 @@ output "jenkins_security_group_id" {
   value       = aws_security_group.jenkins.id
 }
 
+output "jenkins_arn" {
+  description = "ARN of the Jenkins EC2 instance"
+  value       = aws_instance.jenkins.arn
+}
+
 
 output "private_key_path" {
   description = "Path to generated private key"
