@@ -13,7 +13,7 @@ resource "aws_key_pair" "jenkins" {
 # Save private key to local file
 resource "local_file" "private_key" {
   content  = tls_private_key.jenkins.private_key_pem
-  filename = "${path.module}/../../ssh-keys/jenkins-private-key-2.pem"
+  filename = "${path.module}/../../../ssh-keys/jenkins-private-key-3.pem"
   file_permission = "0400"
 }
 
@@ -23,7 +23,7 @@ resource "local_file" "ansible_inventory" {
     jenkins_ip = aws_instance.jenkins.public_ip
     key_path   = local_file.private_key.filename
   })
-  filename = "${path.module}/../../ansible/inventory.ini"
+  filename = "${path.module}/../../../ansible/inventory.ini"
 }
 
 resource "aws_instance" "jenkins" {
@@ -144,14 +144,11 @@ resource "aws_iam_policy" "jenkins_eks_describe" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Action = [
-          "eks:DescribeCluster",
-          "eks:ListClusters"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
+     {
+      "Effect": "Allow",
+      "Action": "eks:*",
+      "Resource": "*"
+     }
     ]
   })
 }

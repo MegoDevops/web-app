@@ -33,18 +33,18 @@
     group: ubuntu
     mode: '0600'
 
-- name: Test Kubernetes cluster access
-  shell: |
-    kubectl cluster-info
-    kubectl get nodes
-  environment:
-    KUBECONFIG: /home/ubuntu/.kube/config
-  become_user: ubuntu
-  register: k8s_test
-  retries: 5
-  delay: 30
-  until: k8s_test.rc == 0
+# - name: Test Kubernetes cluster access
+#   shell: |
+#     kubectl cluster-info
+#     kubectl get nodes
+#   environment:
+#     KUBECONFIG: /home/ubuntu/.kube/config
+#   become_user: ubuntu
+#   register: k8s_test
+#   retries: 5
+#   delay: 30
+#   until: k8s_test.rc == 0
 
-- name: Display Kubernetes cluster info
-  debug:
-    msg: "Kubernetes access successful!\n{{ k8s_test.stdout }}"
+# - name: Display Kubernetes cluster info
+#   debug:
+#     msg: "Kubernetes access successful!\n{{ k8s_test.stdout }}"

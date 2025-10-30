@@ -1,4 +1,7 @@
-# Kubernetes provider for EKS cluster
+# ================================
+# AWS Auth ConfigMap for EKS
+# ================================
+
 data "aws_eks_cluster" "cluster" {
   name = aws_eks_cluster.main.name
 }
@@ -25,13 +28,16 @@ resource "kubernetes_config_map" "aws_auth" {
 
   data = {
     mapRoles = yamlencode([
+      # ✅ Jenkins EC2 Role (to allow kubectl access from your Ansible EC2)
       {
         rolearn  = var.jenkins_iam_role_arn
         username = "jenkins"
         groups   = ["system:masters"]
       },
+
+      # ✅ EKS Node Group Role
       {
-        rolearn  = aws_iam_role.eks_node_group.arn
+        rolearn  =  aws_iam_role.eks_node_group.arn
         username = "system:node:{{EC2PrivateDNSName}}"
         groups   = ["system:bootstrappers", "system:nodes"]
       }

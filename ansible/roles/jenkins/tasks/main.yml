@@ -54,7 +54,7 @@
   apt:
     name: awscli
     state: absent
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Install AWS CLI v2 (correct method)
   shell: |

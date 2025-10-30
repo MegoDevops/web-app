@@ -1,7 +1,7 @@
 ---
 - name: Configure Jenkins Server and EKS Access
   hosts: jenkins
-  become: yes
+  become: true
   
   roles:
     - role: jenkins
