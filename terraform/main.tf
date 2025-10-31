@@ -66,7 +66,7 @@ module "eks" {
   public_subnets            = module.networking.public_subnet_ids  
   jenkins_security_group_id = module.ec2.jenkins_security_group_id  
   vpc_id                    = module.networking.vpc_id
-  jenkins_iam_role_arn      = module.ec2.jenkins_iam_role_arn 
+  jenkins_iam_role_arn      = module.ec2.jenkins_iam_role_arn  
   aws_region                = var.aws_region
 }
 
