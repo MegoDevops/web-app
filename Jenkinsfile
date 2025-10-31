@@ -96,16 +96,14 @@ stage('Deploy to EKS (Helm)') {
       sh '''
         echo "🚀 Deploying to EKS using Helm..."
 
-        # تحديث kubeconfig
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
-        # دالة لمراجعة وتركيب/تحديث release
         deploy_release() {
           local name=$1
           local image_repo=$2
           local image_tag=$3
 
-          if helm list -q | grep -w "$name" &> /dev/null; then
+          if helm status $name &> /dev/null; then
             echo "🔄 Updating $name release..."
             helm upgrade $name ./ --set ${name}.image.repository=$image_repo --set ${name}.image.tag=$image_tag
           else
@@ -114,7 +112,6 @@ stage('Deploy to EKS (Helm)') {
           fi
         }
 
-        # نشر API و Web
         deploy_release "api" $ECR_API $BUILD_NUMBER
         deploy_release "web" $ECR_WEB $BUILD_NUMBER
 
@@ -123,6 +120,7 @@ stage('Deploy to EKS (Helm)') {
     }
   }
 }
+
 
   }
 
