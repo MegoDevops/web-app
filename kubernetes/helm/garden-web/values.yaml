@@ -1,10 +1,10 @@
 image:
-  repository: ""
-  tag: ""
+  repository: "your-dockerhub-username/garden-web"
+  tag: "latest"
   pullPolicy: IfNotPresent
 
 service:
-  type: LoadBalancer  # أو ClusterIP إذا كنت تستخدم Ingress
+  type: ClusterIP  # Use ClusterIP if you deploy via Ingress
   port: 80
   targetPort: 80
 
@@ -20,3 +20,13 @@ resources:
 
 env:
   API_URL: "http://garden-api-service:5000"
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  hosts:
+    - host: garden.example.com
+      paths:
+        - path: /
+          pathType: Prefix
