@@ -95,66 +95,43 @@ stage('Deploy to EKS (Helm)') {
     dir('kubernetes/helm/garden-app') {
       sh '''
         echo "🚀 Deploying to EKS using Helm..."
-        
-        # Debug: Check Helm chart structure
-        echo "=== HELM CHART STRUCTURE ==="
-        pwd
-        ls -la
-        echo "--- Chart.yaml ---"
-        cat Chart.yaml || echo "No Chart.yaml found"
-        echo "--- values.yaml ---" 
-        cat values.yaml || echo "No values.yaml found"
-        echo "--- Templates ---"
-        ls -la templates/ || echo "No templates directory found"
-        echo "========================"
 
-        # Configure kubectl
-        echo "Configuring kubectl..."
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
-        
-        # Test cluster access
-        echo "Testing cluster access..."
-        kubectl get nodes
-        kubectl get namespaces
-        
-        # List current helm releases
-        echo "Current Helm releases:"
-        helm list --all
-        
-        # Test if we can access the cluster with helm
-        echo "Testing Helm cluster access..."
-        helm ls --all-namespaces
 
-        deploy_release() {
-          local name=$1
-          local image_repo=$2
-          local image_tag=$3
-
-          echo "📦 Processing $name release with image: $image_repo:$image_tag"
-          
-          # Check if release exists
-          if helm status $name &> /dev/null; then
-            echo "🔄 Release $name exists - upgrading..."
-            helm upgrade $name . \\
-              --set ${name}.image.repository=$image_repo \\
-              --set ${name}.image.tag=$image_tag \\
-              --debug
-          else
-            echo "✨ Release $name does not exist - installing..."
-            helm install $name . \\
-              --set ${name}.image.repository=$image_repo \\
-              --set ${name}.image.tag=$image_tag \\
-              --debug
-          fi
-        }
+        echo "=== Testing Helm chart ==="
+        # Test if the chart is valid
+        helm lint . || echo "Helm lint failed but continuing..."
+        
+        # Dry run to see what would be deployed
+        echo "=== Dry run API ==="
+        helm upgrade --install api . \
+          --set api.image.repository="$ECR_API" \
+          --set api.image.tag="$BUILD_NUMBER" \
+          --dry-run \
+          --debug || echo "Dry run failed"
 
         echo "Deploying API..."
-        deploy_release "api" "$ECR_API" "$BUILD_NUMBER"
-        
+        helm upgrade --install api . \
+          --set api.image.repository="$ECR_API" \
+          --set api.image.tag="$BUILD_NUMBER" \
+          --atomic \
+          --timeout 10m \
+          --debug
+
         echo "Deploying Web..."
-        deploy_release "web" "$ECR_WEB" "$BUILD_NUMBER"
+        helm upgrade --install web . \
+          --set web.image.repository="$ECR_WEB" \
+          --set web.image.tag="$BUILD_NUMBER" \
+          --atomic \
+          --timeout 10m \
+          --debug
 
         echo "✅ Deployment completed successfully."
+        
+        # Verify deployments
+        echo "=== Verification ==="
+        helm list
+        kubectl get pods --all-namespaces
       '''
     }
   }
