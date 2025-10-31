@@ -3,8 +3,8 @@ pipeline {
 
   environment {
     AWS_CREDENTIALS = credentials('aws-creds')
-    GITHUB_CREDS = credentials('c8a0bac6-514c-4906-93a4-eb61dbea091a')
-    SONAR_TOKEN = credentials('sonarqube-token')
+    GITHUB_CREDS = credentials('github-token')
+    SONAR_TOKEN = credentials('sonar-token')
     CLUSTER_NAME = "garden-web-app-cluster"
     REGION = "eu-west-3"
     ECR_API = "964711978492.dkr.ecr.eu-west-3.amazonaws.com/garden-web-app-api"

@@ -53,7 +53,7 @@ resource "kubernetes_config_map" "aws_auth" {
       metadata[0].labels,
       data,
     ]
-    prevent_destroy = true
+    prevent_destroy = false
   }
 
   depends_on = [
