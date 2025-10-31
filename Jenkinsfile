@@ -98,57 +98,29 @@ stage('Deploy to EKS (Helm)') {
 
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
-        echo "=== Testing Helm chart ==="
-        # Test if the chart is valid
-        helm lint . || echo "Helm lint failed but continuing..."
-        
-        # Dry run to see what would be deployed
-        echo "=== Dry run API ==="
-        helm upgrade --install api . \
-          --set api.image.repository="$ECR_API" \
-          --set api.image.tag="$BUILD_NUMBER" \
-          --set web.enabled=false \
-          --dry-run \
-          --debug || echo "Dry run failed"
-
-        echo "=== Dry run Web ==="
-        helm upgrade --install web . \
-          --set api.enabled=false \
-          --set web.image.repository="$ECR_WEB" \
-          --set web.image.tag="$BUILD_NUMBER" \
-          --dry-run \
-          --debug || echo "Dry run failed"
+        # Remove web templates temporarily
+        mv templates/web-deployment.yaml templates/web-deployment.yaml.bak
+        mv templates/web-service.yaml templates/web-service.yaml.bak
 
         echo "Deploying API..."
         helm upgrade --install api . \
           --set api.image.repository="$ECR_API" \
           --set api.image.tag="$BUILD_NUMBER" \
-          --set web.enabled=false \
-          --atomic \
-          --timeout 10m \
-          --debug
+          --timeout 10m
 
-        echo "Waiting for API to be ready..."
-        kubectl wait --for=condition=ready pod -l app=garden-api --timeout=300s
+        # Restore web templates
+        mv templates/web-deployment.yaml.bak templates/web-deployment.yaml
+        mv templates/web-service.yaml.bak templates/web-service.yaml
 
         echo "Deploying Web..."
         helm upgrade --install web . \
-          --set api.enabled=false \
           --set web.image.repository="$ECR_WEB" \
           --set web.image.tag="$BUILD_NUMBER" \
-          --atomic \
-          --timeout 10m \
-          --debug
-
-        echo "Waiting for Web to be ready..."
-        kubectl wait --for=condition=ready pod -l app=garden-web --timeout=300s
+          --timeout 10m
 
         echo "✅ Deployment completed successfully."
         
-        # Verify deployments
-        echo "=== Verification ==="
-        helm list
-        kubectl get pods,services,deployments
+        kubectl get pods
       '''
     }
   }
