@@ -98,29 +98,46 @@ stage('Deploy to EKS (Helm)') {
 
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
-        # Remove web templates temporarily
-        mv templates/web-deployment.yaml templates/web-deployment.yaml.bak
-        mv templates/web-service.yaml templates/web-service.yaml.bak
+        # Clean up any failed deployments first
+        echo "Cleaning up any failed deployments..."
+        helm uninstall api || true
+        helm uninstall web || true
+        kubectl delete deployment garden-api garden-web || true
+        kubectl delete service garden-api-service garden-web-service || true
 
-        echo "Deploying API..."
+        # Wait for cleanup
+        sleep 10
+
+        echo "Deploying API (without web)..."
         helm upgrade --install api . \
           --set api.image.repository="$ECR_API" \
           --set api.image.tag="$BUILD_NUMBER" \
-          --timeout 10m
+          --set web.image.repository="busybox" \
+          --set web.image.tag="latest" \
+          --timeout 10m \
+          --debug
 
-        # Restore web templates
-        mv templates/web-deployment.yaml.bak templates/web-deployment.yaml
-        mv templates/web-service.yaml.bak templates/web-service.yaml
+        echo "Waiting for API to be ready..."
+        kubectl wait --for=condition=ready pod -l app=garden-api --timeout=300s
 
-        echo "Deploying Web..."
+        echo "Deploying Web with correct image..."
         helm upgrade --install web . \
+          --set api.image.repository="busybox" \
+          --set api.image.tag="latest" \
           --set web.image.repository="$ECR_WEB" \
           --set web.image.tag="$BUILD_NUMBER" \
-          --timeout 10m
+          --timeout 10m \
+          --debug
+
+        echo "Waiting for Web to be ready..."
+        kubectl wait --for=condition=ready pod -l app=garden-web --timeout=300s
 
         echo "✅ Deployment completed successfully."
         
-        kubectl get pods
+        # Final status
+        echo "=== Final Status ==="
+        helm list
+        kubectl get pods,services
       '''
     }
   }
