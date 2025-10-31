@@ -4,18 +4,18 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: LoadBalancer  # أو ClusterIP إذا كنت تستخدم Ingress
+  type: LoadBalancer
   port: 80
   targetPort: 80
 
-replicaCount: 2
+replicaCount: 1  # قلل الـ replicas مؤقتاً
 
 resources:
   requests:
-    memory: "128Mi"
+    memory: "256Mi"  # زيد من 128Mi
     cpu: "100m"
   limits:
-    memory: "256Mi"
+    memory: "512Mi"  # زيد من 256Mi  
     cpu: "250m"
 
 env:
