@@ -24,14 +24,12 @@ pipeline {
       steps {
         dir('web-app-example') {
           withSonarQubeEnv('SonarQube') {
-            script {
-              def scannerHome = tool 'SonarScanner'
               sh """
-                ${scannerHome}/bin/sonar-scanner \
-                  -Dsonar.projectKey=garden-web-app \
-                  -Dsonar.sources=. \
-                  -Dsonar.host.url=http://localhost:9000 \
-                  -Dsonar.login=${SONAR_TOKEN}
+                sonar-scanner \
+                 -Dsonar.projectKey=garden-web-app \
+                 -Dsonar.sources=. \
+                 -Dsonar.host.url=http://localhost:9000 \
+                 -Dsonar.login=${SONAR_TOKEN}
               """
             }
           }
