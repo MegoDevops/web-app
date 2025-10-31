@@ -73,12 +73,21 @@ pipeline {
           steps {
             dir('web-app-example/web') {
               sh '''
-                echo "🔧 Building and pushing Web image..."
-                aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_WEB
-                docker build -t $ECR_WEB:$BUILD_NUMBER .
-                docker run --rm aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_WEB:$BUILD_NUMBER
-                docker push $ECR_WEB:$BUILD_NUMBER
-                echo "✅ Web image pushed successfully."
+                  echo "🔧 Building Web image..."
+                  aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_WEB
+                  docker build -t $ECR_WEB:$BUILD_NUMBER .
+                  
+                  echo "🔧 Pushing Web image to ECR..."
+                  docker push $ECR_WEB:$BUILD_NUMBER
+
+                  echo "🔧 Scanning Web image with Trivy..."
+                  docker run --rm aquasec/trivy image \
+                   --exit-code 0 \
+                   --severity HIGH,CRITICAL \
+                   --remote $ECR_WEB:$BUILD_NUMBER \
+                   --username AWS \
+                   --password $(aws ecr get-login-password --region $REGION)
+                   echo "✅ Web image pushed and scanned successfully."
               '''
             }
           }
