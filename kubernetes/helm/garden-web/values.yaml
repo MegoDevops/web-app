@@ -6,7 +6,7 @@ image:
 service:
   type: ClusterIP  # Use ClusterIP if you deploy via Ingress
   port: 80
-  targetPort: 80
+  targetPort: 8080
 
 replicaCount: 1
 
