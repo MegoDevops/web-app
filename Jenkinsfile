@@ -96,15 +96,29 @@ stage('Deploy to EKS (Helm - Separate Charts)') {
       sh '''
         echo "🚀 Deploying to EKS using Separate Helm Charts..."
         echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
         
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
+        # Clean up old releases and resources first
+        echo "🧹 Cleaning up old releases..."
+        helm uninstall api || true
+        helm uninstall web || true
+        helm uninstall garden-api || true
+        helm uninstall garden-web || true
+        
+        # Delete any orphaned resources
+        echo "🧹 Deleting orphaned resources..."
+        kubectl delete service garden-api-service garden-web-service || true
+        kubectl delete deployment garden-api garden-web || true
+        
+        # Wait for cleanup to complete
+        echo "⏳ Waiting for cleanup..."
+        sleep 10
+
         # Verify charts exist
         echo "=== Verifying Helm Charts ==="
-        helm lint garden-api || echo "API chart linting failed"
-        helm lint garden-web || echo "Web chart linting failed"
+        helm lint garden-api
+        helm lint garden-web
 
         # Deploy API
         echo "📦 Deploying API..."
