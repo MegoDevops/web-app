@@ -28,3 +28,8 @@ variable "jenkins_iam_role_arn" {
   description = "Jenkins IAM role ARN for EKS access"
   type        = string
 }
+
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+}

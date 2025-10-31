@@ -6,4 +6,5 @@
   roles:
     - role: jenkins
     - role: cloudwatch
-    - role: eks-config  
+    - role: eks-config 
+    - role: sonarqube 

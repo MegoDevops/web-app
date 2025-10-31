@@ -18,6 +18,12 @@ provider "kubernetes" {
 }
 
 # Manage aws-auth ConfigMap safely
+resource "null_resource" "wait_for_eks" {
+  provisioner "local-exec" {
+    command = "aws eks wait cluster-active --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
+  }
+}
+
 resource "kubernetes_config_map" "aws_auth" {
   provider = kubernetes.eks
 
@@ -28,16 +34,13 @@ resource "kubernetes_config_map" "aws_auth" {
 
   data = {
     mapRoles = yamlencode([
-      # ✅ Jenkins EC2 Role (to allow kubectl access from your Ansible EC2)
       {
         rolearn  = var.jenkins_iam_role_arn
         username = "jenkins"
         groups   = ["system:masters"]
       },
-
-      # ✅ EKS Node Group Role
       {
-        rolearn  =  aws_iam_role.eks_node_group.arn
+        rolearn  = aws_iam_role.eks_node_group.arn
         username = "system:node:{{EC2PrivateDNSName}}"
         groups   = ["system:bootstrappers", "system:nodes"]
       }
@@ -45,11 +48,17 @@ resource "kubernetes_config_map" "aws_auth" {
   }
 
   lifecycle {
-    ignore_changes = [data, metadata]
+    ignore_changes = [
+      metadata[0].annotations,
+      metadata[0].labels,
+      data,
+    ]
+    prevent_destroy = true
   }
 
   depends_on = [
     aws_eks_cluster.main,
-    aws_eks_node_group.main
+    aws_eks_node_group.main,
+    null_resource.wait_for_eks
   ]
 }
