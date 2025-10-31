@@ -90,39 +90,39 @@ pipeline {
         }
       }
     }
+stage('Deploy to EKS (Helm)') {
+  steps {
+    dir('kubernetes/helm/garden-app') {
+      sh '''
+        echo "🚀 Deploying to EKS using Helm..."
 
-    stage('Deploy to EKS (Helm)') {
-      steps {
-        dir('kubernetes/helm/garden-app') {
-          sh '''
-            echo "🚀 Deploying to EKS using Helm..."
+        # تحديث kubeconfig
+        aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
-            # تحديث kubeconfig
-            aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+        # دالة لمراجعة وتركيب/تحديث release
+        deploy_release() {
+          local name=$1
+          local image_repo=$2
+          local image_tag=$3
 
-            # التحقق من وجود release قبل التثبيت
-            if helm status api &> /dev/null; then
-              echo "Updating API release..."
-              helm upgrade api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
-            else
-              echo "Installing API release..."
-              helm install api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
-            fi
-
-            if helm status web &> /dev/null; then
-              echo "Updating Web release..."
-              helm upgrade web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
-            else
-              echo "Installing Web release..."
-              helm install web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
-            fi
-
-            echo "✅ Deployment completed successfully."
-          '''
+          if helm list -q | grep -w "$name" &> /dev/null; then
+            echo "🔄 Updating $name release..."
+            helm upgrade $name ./ --set ${name}.image.repository=$image_repo --set ${name}.image.tag=$image_tag
+          else
+            echo "✨ Installing $name release..."
+            helm install $name ./ --set ${name}.image.repository=$image_repo --set ${name}.image.tag=$image_tag
+          fi
         }
-      }
+
+        # نشر API و Web
+        deploy_release "api" $ECR_API $BUILD_NUMBER
+        deploy_release "web" $ECR_WEB $BUILD_NUMBER
+
+        echo "✅ Deployment completed successfully."
+      '''
     }
   }
+}
 
   post {
     success {
