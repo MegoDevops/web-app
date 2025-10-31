@@ -124,6 +124,8 @@ stage('Deploy to EKS (Helm)') {
   }
 }
 
+  }
+
   post {
     success {
       echo "✅ CI/CD completed successfully. Both API and Web deployed to EKS."
