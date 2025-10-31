@@ -95,32 +95,70 @@ stage('Deploy to EKS (Helm)') {
     dir('kubernetes/helm/garden-app') {
       sh '''
         echo "🚀 Deploying to EKS using Helm..."
+        
+        # Debug: Check Helm chart structure
+        echo "=== HELM CHART STRUCTURE ==="
+        pwd
+        ls -la
+        echo "--- Chart.yaml ---"
+        cat Chart.yaml || echo "No Chart.yaml found"
+        echo "--- values.yaml ---" 
+        cat values.yaml || echo "No values.yaml found"
+        echo "--- Templates ---"
+        ls -la templates/ || echo "No templates directory found"
+        echo "========================"
 
+        # Configure kubectl
+        echo "Configuring kubectl..."
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+        
+        # Test cluster access
+        echo "Testing cluster access..."
+        kubectl get nodes
+        kubectl get namespaces
+        
+        # List current helm releases
+        echo "Current Helm releases:"
+        helm list --all
+        
+        # Test if we can access the cluster with helm
+        echo "Testing Helm cluster access..."
+        helm ls --all-namespaces
 
         deploy_release() {
           local name=$1
           local image_repo=$2
           local image_tag=$3
 
+          echo "📦 Processing $name release with image: $image_repo:$image_tag"
+          
+          # Check if release exists
           if helm status $name &> /dev/null; then
-            echo "🔄 Updating $name release..."
-            helm upgrade $name ./ --set ${name}.image.repository=$image_repo --set ${name}.image.tag=$image_tag
+            echo "🔄 Release $name exists - upgrading..."
+            helm upgrade $name . \\
+              --set ${name}.image.repository=$image_repo \\
+              --set ${name}.image.tag=$image_tag \\
+              --debug
           else
-            echo "✨ Installing $name release..."
-            helm install $name ./ --set ${name}.image.repository=$image_repo --set ${name}.image.tag=$image_tag
+            echo "✨ Release $name does not exist - installing..."
+            helm install $name . \\
+              --set ${name}.image.repository=$image_repo \\
+              --set ${name}.image.tag=$image_tag \\
+              --debug
           fi
         }
 
-        deploy_release "api" $ECR_API $BUILD_NUMBER
-        deploy_release "web" $ECR_WEB $BUILD_NUMBER
+        echo "Deploying API..."
+        deploy_release "api" "$ECR_API" "$BUILD_NUMBER"
+        
+        echo "Deploying Web..."
+        deploy_release "web" "$ECR_WEB" "$BUILD_NUMBER"
 
         echo "✅ Deployment completed successfully."
       '''
     }
   }
 }
-
 
   }
 
