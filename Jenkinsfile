@@ -96,9 +96,27 @@ pipeline {
         dir('kubernetes/helm/garden-app') {
           sh '''
             echo "🚀 Deploying to EKS using Helm..."
+
+            # تحديث kubeconfig
             aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
-            helm upgrade --install api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
-            helm upgrade --install web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
+
+            # التحقق من وجود release قبل التثبيت
+            if helm status api &> /dev/null; then
+              echo "Updating API release..."
+              helm upgrade api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
+            else
+              echo "Installing API release..."
+              helm install api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
+            fi
+
+            if helm status web &> /dev/null; then
+              echo "Updating Web release..."
+              helm upgrade web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
+            else
+              echo "Installing Web release..."
+              helm install web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
+            fi
+
             echo "✅ Deployment completed successfully."
           '''
         }
