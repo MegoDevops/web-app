@@ -11,8 +11,8 @@ pipeline {
     ECR_WEB = "964711978492.dkr.ecr.eu-west-3.amazonaws.com/garden-web-app-web"
   }
 
-//stage definitions 
   stages {
+
     stage('Checkout') {
       steps {
         checkout scm
@@ -24,12 +24,14 @@ pipeline {
       steps {
         dir('web-app-example') {
           withSonarQubeEnv('SonarQube') {
+            // استخدم أداة SonarScanner المعرفة في Jenkins > Global Tool Configuration
             sh '''
-              ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                 -Dsonar.projectKey=garden-web-app \
-                 -Dsonar.sources=. \
-                 -Dsonar.host.url=http://localhost:9000 \
-                 -Dsonar.login=${SONAR_TOKEN}
+              SONAR_SCANNER_PATH="${tool 'SonarScanner'}/bin/sonar-scanner"
+              $SONAR_SCANNER_PATH \
+                -Dsonar.projectKey=garden-web-app \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=http://localhost:9000 \
+                -Dsonar.login=${SONAR_TOKEN}
             '''
           }
         }
@@ -46,14 +48,17 @@ pipeline {
 
     stage('Build & Push Docker Images') {
       parallel {
+
         stage('API Image') {
           steps {
             dir('web-app-example/api') {
               sh '''
+                echo "🔧 Building and pushing API image..."
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_API
                 docker build -t $ECR_API:$BUILD_NUMBER .
                 docker run --rm aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_API:$BUILD_NUMBER
                 docker push $ECR_API:$BUILD_NUMBER
+                echo "✅ API image pushed successfully."
               '''
             }
           }
@@ -63,10 +68,12 @@ pipeline {
           steps {
             dir('web-app-example/web') {
               sh '''
+                echo "🔧 Building and pushing Web image..."
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_WEB
                 docker build -t $ECR_WEB:$BUILD_NUMBER .
                 docker run --rm aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_WEB:$BUILD_NUMBER
                 docker push $ECR_WEB:$BUILD_NUMBER
+                echo "✅ Web image pushed successfully."
               '''
             }
           }
@@ -78,9 +85,11 @@ pipeline {
       steps {
         dir('kubernetes/helm/garden-app') {
           sh '''
+            echo "🚀 Deploying to EKS using Helm..."
             aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
             helm upgrade --install api ./ --set api.image.repository=$ECR_API --set api.image.tag=$BUILD_NUMBER
             helm upgrade --install web ./ --set web.image.repository=$ECR_WEB --set web.image.tag=$BUILD_NUMBER
+            echo "✅ Deployment completed successfully."
           '''
         }
       }
@@ -92,7 +101,7 @@ pipeline {
       echo "✅ CI/CD completed successfully. Both API and Web deployed to EKS."
     }
     failure {
-      echo "❌ Pipeline failed. Check Jenkins logs."
+      echo "❌ Pipeline failed. Check Jenkins logs for details."
     }
   }
 }
