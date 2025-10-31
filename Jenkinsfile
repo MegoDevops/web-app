@@ -53,12 +53,17 @@ pipeline {
           steps {
             dir('web-app-example/api') {
               sh '''
-                echo "🔧 Building and pushing API image..."
+                echo "🔧 Building API image..."
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_API
                 docker build -t $ECR_API:$BUILD_NUMBER .
-                docker run --rm aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_API:$BUILD_NUMBER
+
+                echo "🔧 Pushing API image to ECR..."
                 docker push $ECR_API:$BUILD_NUMBER
-                echo "✅ API image pushed successfully."
+
+                echo "🔧 Scanning API image with Trivy..."
+                docker run --rm aquasec/trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_API:$BUILD_NUMBER
+
+                echo "✅ API image pushed and scanned successfully."
               '''
             }
           }
