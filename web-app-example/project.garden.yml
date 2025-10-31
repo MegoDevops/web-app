@@ -1,0 +1,13 @@
+# At the root of your project
+apiVersion: garden.io/v2
+kind: Project
+name: three-tier
+
+environments: # <--- Every Garden project has one more environments
+  - name: dev
+    variables: 
+      hostname: 
+        "local.demo.garden"
+
+providers:
+  - name: local-kubernetes
