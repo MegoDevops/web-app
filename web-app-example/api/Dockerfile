@@ -1,20 +1,30 @@
-# Using official python runtime base image
-FROM python:3.10.5-alpine3.16
+# استخدم base image للـ Python
+FROM python:3.10.5
 
-# Set the application directory
+# إنشاء مجلد العمل
 WORKDIR /app
 
-RUN apk add --no-cache entr postgresql-dev musl-dev gcc
+# نسخ ملفات المشروع الأساسية
+COPY requirements.txt ./
+# لو عندك Pipfile أو poetry.lock ممكن تستخدمهم بدل requirements.txt
 
-# Install our requirements.txt
-COPY requirements.txt /app/requirements.txt
-RUN pip install -r requirements.txt
+# تثبيت الـ dependencies
+RUN pip install --upgrade pip==22.0.4 setuptools==58.1.0 \
+    && pip install -r requirements.txt
 
-# Copy our code from the current folder to /app inside the container
-COPY . /app
+# نسخ باقي ملفات المشروع
+COPY . .
 
-# Make port 80 available for links and/or publish
-EXPOSE 80
+# كشف البورت
+EXPOSE 8080
 
-# Define our command to be run when launching the container
+# وضع environment variables
+ENV DB_PASSWORD=postgres
+ENV DB_NAME=postgres
+ENV DB_HOST=db
+ENV DB_PORT=5432
+ENV DB_USER=postgres
+ENV LANG=C.UTF-8
+
+# أمر تشغيل التطبيق
 CMD ["gunicorn", "app:app", "-b", "0.0.0.0:8080", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]
