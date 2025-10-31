@@ -90,51 +90,51 @@ pipeline {
         }
       }
     }
-stage('Deploy to EKS (Helm)') {
+stage('Deploy to EKS (Helm - Separate Charts)') {
   steps {
-    dir('kubernetes/helm/garden-app') {
+    dir('kubernetes/helm') {
       sh '''
-        echo "🚀 Deploying to EKS using Helm..."
-
+        echo "🚀 Deploying to EKS using Separate Helm Charts..."
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        
         aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
 
-        # Clean up any failed deployments first
-        echo "Cleaning up any failed deployments..."
-        helm uninstall api || true
-        helm uninstall web || true
-        kubectl delete deployment garden-api garden-web || true
-        kubectl delete service garden-api-service garden-web-service || true
+        # Verify charts exist
+        echo "=== Verifying Helm Charts ==="
+        helm lint garden-api || echo "API chart linting failed"
+        helm lint garden-web || echo "Web chart linting failed"
 
-        # Wait for cleanup
-        sleep 10
-
-        echo "Deploying API (without web)..."
-        helm upgrade --install api . \
-          --set api.image.repository="$ECR_API" \
-          --set api.image.tag="$BUILD_NUMBER" \
-          --set web.image.repository="busybox" \
-          --set web.image.tag="latest" \
+        # Deploy API
+        echo "📦 Deploying API..."
+        helm upgrade --install garden-api ./garden-api \
+          --set image.repository="$ECR_API" \
+          --set image.tag="$BUILD_NUMBER" \
+          --atomic \
           --timeout 10m \
           --debug
 
-        echo "Waiting for API to be ready..."
+        # Wait for API to be ready
+        echo "⏳ Waiting for API to be ready..."
         kubectl wait --for=condition=ready pod -l app=garden-api --timeout=300s
 
-        echo "Deploying Web with correct image..."
-        helm upgrade --install web . \
-          --set api.image.repository="busybox" \
-          --set api.image.tag="latest" \
-          --set web.image.repository="$ECR_WEB" \
-          --set web.image.tag="$BUILD_NUMBER" \
+        # Deploy Web
+        echo "🌐 Deploying Web..."
+        helm upgrade --install garden-web ./garden-web \
+          --set image.repository="$ECR_WEB" \
+          --set image.tag="$BUILD_NUMBER" \
+          --atomic \
           --timeout 10m \
           --debug
 
-        echo "Waiting for Web to be ready..."
+        # Wait for Web to be ready
+        echo "⏳ Waiting for Web to be ready..."
         kubectl wait --for=condition=ready pod -l app=garden-web --timeout=300s
 
-        echo "✅ Deployment completed successfully."
+        echo "✅ All deployments completed successfully!"
         
-        # Final status
+        # Verification
         echo "=== Final Status ==="
         helm list
         kubectl get pods,services

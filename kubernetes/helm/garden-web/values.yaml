@@ -1,0 +1,22 @@
+image:
+  repository: ""
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer  # أو ClusterIP إذا كنت تستخدم Ingress
+  port: 80
+  targetPort: 80
+
+replicaCount: 2
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
+
+env:
+  API_URL: "http://garden-api-service:5000"
