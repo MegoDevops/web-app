@@ -24,15 +24,16 @@ pipeline {
       steps {
         dir('web-app-example') {
           withSonarQubeEnv('SonarQube') {
-            // استخدم أداة SonarScanner المعرفة في Jenkins > Global Tool Configuration
-            sh '''
-              SONAR_SCANNER_PATH="${tool 'SonarScanner'}/bin/sonar-scanner"
-              $SONAR_SCANNER_PATH \
-                -Dsonar.projectKey=garden-web-app \
-                -Dsonar.sources=. \
-                -Dsonar.host.url=http://localhost:9000 \
-                -Dsonar.login=${SONAR_TOKEN}
-            '''
+            script {
+              def scannerHome = tool 'SonarScanner'
+              sh """
+                ${scannerHome}/bin/sonar-scanner \
+                  -Dsonar.projectKey=garden-web-app \
+                  -Dsonar.sources=. \
+                  -Dsonar.host.url=http://localhost:9000 \
+                  -Dsonar.login=${SONAR_TOKEN}
+              """
+            }
           }
         }
       }
