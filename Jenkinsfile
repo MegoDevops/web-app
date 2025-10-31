@@ -107,6 +107,15 @@ stage('Deploy to EKS (Helm)') {
         helm upgrade --install api . \
           --set api.image.repository="$ECR_API" \
           --set api.image.tag="$BUILD_NUMBER" \
+          --set web.enabled=false \
+          --dry-run \
+          --debug || echo "Dry run failed"
+
+        echo "=== Dry run Web ==="
+        helm upgrade --install web . \
+          --set api.enabled=false \
+          --set web.image.repository="$ECR_WEB" \
+          --set web.image.tag="$BUILD_NUMBER" \
           --dry-run \
           --debug || echo "Dry run failed"
 
@@ -114,29 +123,36 @@ stage('Deploy to EKS (Helm)') {
         helm upgrade --install api . \
           --set api.image.repository="$ECR_API" \
           --set api.image.tag="$BUILD_NUMBER" \
+          --set web.enabled=false \
           --atomic \
           --timeout 10m \
           --debug
 
+        echo "Waiting for API to be ready..."
+        kubectl wait --for=condition=ready pod -l app=garden-api --timeout=300s
+
         echo "Deploying Web..."
         helm upgrade --install web . \
+          --set api.enabled=false \
           --set web.image.repository="$ECR_WEB" \
           --set web.image.tag="$BUILD_NUMBER" \
           --atomic \
           --timeout 10m \
           --debug
 
+        echo "Waiting for Web to be ready..."
+        kubectl wait --for=condition=ready pod -l app=garden-web --timeout=300s
+
         echo "✅ Deployment completed successfully."
         
         # Verify deployments
         echo "=== Verification ==="
         helm list
-        kubectl get pods --all-namespaces
+        kubectl get pods,services,deployments
       '''
     }
   }
 }
-
   }
 
   post {
