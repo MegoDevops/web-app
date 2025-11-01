@@ -16,7 +16,7 @@ RUN npm install
 COPY . .
 
 # كشف البورت اللي هيتشغل عليه
-EXPOSE 8080
+EXPOSE 8081
 
 # ضع environment variables لو محتاج
 ENV NODE_ENV=production

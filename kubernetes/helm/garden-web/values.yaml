@@ -6,7 +6,7 @@ image:
 service:
   type: NodePort  # Change from ClusterIP to NodePort for ALB
   port: 80
-  targetPort: 8080  
+  targetPort: 8081 
 
 replicaCount: 1
 
