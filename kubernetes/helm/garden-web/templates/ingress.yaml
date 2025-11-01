@@ -5,12 +5,13 @@ metadata:
   name: {{ .Chart.Name }}-ingress
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
-    {{ $key }}: {{ $value }}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
+  ingressClassName: alb  # Add this line - CRITICAL!
   rules:
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host }}
+    - host: {{ .host | quote }}
       http:
         paths:
           {{- range .paths }}
