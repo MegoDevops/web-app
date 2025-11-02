@@ -143,7 +143,45 @@ pipeline {
         }
       }
     }
-
+    stage('Setup Nginx Ingress') {
+      steps {
+        script {
+          sh '''
+            echo "🔧 Setting up Nginx Ingress Controller..."
+            aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+            
+            # Check if ingress-nginx already exists
+            if kubectl get namespace ingress-nginx &>/dev/null; then
+              echo "✅ ingress-nginx namespace already exists"
+            else
+              echo "📦 Installing nginx-ingress controller..."
+              
+              # Add Helm repository
+              helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+              helm repo update
+              
+              # Install nginx-ingress
+              helm install ingress-nginx ingress-nginx/ingress-nginx \
+                --namespace ingress-nginx \
+                --create-namespace \
+                --set controller.service.type=LoadBalancer \
+                --set controller.service.annotations."service\\.beta\\.kubernetes\\.io/aws-load-balancer-type"="nlb" \
+                --wait \
+                --timeout 5m
+              
+              echo "✅ Nginx ingress controller installed"
+            fi
+            
+            # Wait for LoadBalancer to be ready
+            echo "⏳ Waiting for LoadBalancer to be provisioned..."
+            timeout 300 bash -c 'until kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].hostname}" &>/dev/null; do sleep 10; echo "Waiting for LoadBalancer..."; done'
+            
+            LB_HOST=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            echo "✅ LoadBalancer ready: $LB_HOST"
+          '''
+        }
+      }
+    }
     stage('Deploy to EKS (Helm)') {
       steps {
         dir('kubernetes/helm') {
