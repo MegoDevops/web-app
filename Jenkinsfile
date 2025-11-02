@@ -122,27 +122,6 @@ pipeline {
                 echo "🔧 Building Web image..."
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_WEB
                 
-                # Create package.json if it doesn't exist
-                if [ ! -f package.json ]; then
-                  echo '{
-                    "name": "garden-web-app",
-                    "version": "1.0.0",
-                    "description": "Garden voting web application",
-                    "scripts": {
-                      "start": "npx http-server -p 8080",
-                      "test": "mocha test.js --timeout 10000"
-                    },
-                    "dependencies": {
-                      "axios": "^1.0.0"
-                    },
-                    "devDependencies": {
-                      "mocha": "^10.0.0",
-                      "chai": "^4.3.0",
-                      "http-server": "^14.0.0"
-                    }
-                  }' > package.json
-                fi
-                
                 # Build the image
                 docker build -t $ECR_WEB:$BUILD_NUMBER .
                 docker tag $ECR_WEB:$BUILD_NUMBER $ECR_WEB:latest

@@ -6,24 +6,36 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source code
+# Copy source code including vue.config.js
 COPY . .
 
-# Build the app (if needed - adjust based on your web framework)
-RUN npm run build || echo "No build script, serving directly"
+# Build the Vue.js app for production
+RUN npm run build
 
-FROM node:14-alpine as production-stage
+# Production stage
+FROM node:14-alpine
 
 WORKDIR /app
 
-# Copy built app or source files
-COPY --from=build-stage /app .
+# Copy built Vue app
+COPY --from=build-stage /app/dist ./dist
+
+# Copy package.json for production dependencies
+COPY package*.json ./
+
+# Install only production dependencies for Express server
+RUN npm install express cors axios
+
+# Create production server file
+COPY server.js ./
 
 # Create non-root user
-RUN adduser -D appuser && chown -R appuser:appuser /app
+RUN addgroup -g 1000 appuser && \
+    adduser -S -u 1000 -G appuser appuser && \
+    chown -R appuser:appuser /app
+
 USER appuser
 
 EXPOSE 8080
 
-# Adjust this based on your web framework
-CMD ["npm", "start"] || ["node", "server.js"]
+CMD ["node", "server.js"]
