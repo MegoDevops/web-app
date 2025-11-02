@@ -72,7 +72,7 @@ pipeline {
         dir('web-app-example') {
           withSonarQubeEnv('SonarQube') {
             sh '''
-                /opt/sonarqube-25.10.0.114319 \\
+                /opt/sonarqube-25.10.0.114319/ \\
                   -Dsonar.projectKey=garden-web-app \\
                   -Dsonar.sources=. \\
                   -Dsonar.host.url=http://localhost:9000 \\
