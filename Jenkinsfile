@@ -18,12 +18,6 @@ pipeline {
         checkout scm
         echo "✅ Source code checked out successfully."
         
-        // Display project structure
-        sh '''
-          echo "=== Project Structure ==="
-          find . -type f -name "*.py" -o -name "*.yaml" -o -name "*.yml" -o -name "Dockerfile" -o -name "requirements.txt" | head -20
-          echo "========================="
-        '''
       }
     }
 
