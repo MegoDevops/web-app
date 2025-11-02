@@ -1,19 +1,57 @@
+# Default values for garden-api
+replicaCount: 1
+
 image:
-  repository: ""
-  tag: ""
+  repository: ""  # Will be set in Jenkins
+  tag: "latest"   # Will be set in Jenkins
   pullPolicy: IfNotPresent
 
 service:
-  type: NodePort  
-  port: 5000
-  targetPort: 5000
+  type: ClusterIP
+  port: 8080
 
-replicaCount: 1
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: "api.garden-app.local"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+env:
+  OPTION_A: "Cats"
+  OPTION_B: "Dogs"
+  DB_HOST: "postgresql"
+  PGDATABASE: "postgres"
+  PGUSER: "postgres"
+  PGPASSWORD: "postgres"
+  DB_PORT: "5432"
+  FLASK_ENV: "production"
 
 resources:
-  requests:
-    memory: "256Mi"
-    cpu: "250m"
   limits:
-    memory: "512Mi"
-    cpu: "500m"
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 128Mi
+    cpu: 100m
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

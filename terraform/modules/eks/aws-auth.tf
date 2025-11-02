@@ -49,11 +49,13 @@ resource "kubernetes_config_map" "aws_auth" {
 
   lifecycle {
     ignore_changes = [
+      
       metadata[0].annotations,
       metadata[0].labels,
       data,
     ]
     prevent_destroy = false
+    
   }
 
   depends_on = [

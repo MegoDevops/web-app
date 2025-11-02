@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-seed
+  labels:
+    app: db-seed
+spec:
+  template:
+    spec:
+      containers:
+      - name: db-seed
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Waiting for database to be ready..."
+          until pg_isready -h {{ .Values.database.host }} -U {{ .Values.database.user }} -d {{ .Values.database.name }}; do
+            sleep 2
+          done
+          echo "Database is ready. Creating tables..."
+          psql -h {{ .Values.database.host }} -U {{ .Values.database.user }} -d {{ .Values.database.name }} -c '
+            CREATE TABLE IF NOT EXISTS votes (
+              id VARCHAR(255) NOT NULL UNIQUE,
+              vote VARCHAR(255) NOT NULL,
+              created_at TIMESTAMP DEFAULT NOW()
+            );'
+          echo "Database seeding completed successfully!"
+        env:
+        - name: PGPASSWORD
+          value: "{{ .Values.database.password }}"
+      restartPolicy: OnFailure
+  backoffLimit: 3

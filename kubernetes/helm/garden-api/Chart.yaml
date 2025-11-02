@@ -1,6 +1,6 @@
 apiVersion: v2
 name: garden-api
-description: Garden Application API
+description: Garden Voting API
 type: application
 version: 0.1.0
 appVersion: "1.0.0"

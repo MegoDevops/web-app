@@ -1,6 +1,6 @@
 apiVersion: v2
 name: garden-web
-description: Garden Application Web
+description: Garden Voting Web Frontend
 type: application
 version: 0.1.0
 appVersion: "1.0.0"

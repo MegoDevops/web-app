@@ -1,37 +1,51 @@
+# Default values for garden-web
+replicaCount: 1
+
 image:
-  repository: "your-dockerhub-username/garden-web"
-  tag: "latest"
+  repository: ""  # Will be set in Jenkins
+  tag: "latest"   # Will be set in Jenkins
   pullPolicy: IfNotPresent
 
 service:
-  type: NodePort  # Change from ClusterIP to NodePort for ALB
-  port: 80
-  targetPort: 8081 
-
-replicaCount: 1
-
-resources:
-  requests:
-    memory: "256Mi"
-    cpu: "200m"
-  limits:
-    memory: "512Mi"
-    cpu: "500m"
-
-env:
-  API_URL: "http://garden-api-service:5000"
+  type: ClusterIP
+  port: 8080
 
 ingress:
   enabled: true
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/load-balancer-name: garden-web-alb
-    alb.ingress.kubernetes.io/healthcheck-path: /
-    alb.ingress.kubernetes.io/healthcheck-port: "80"
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  className: "nginx"
   hosts:
-    - host: garden.example.com
+    - host: "web.garden-app.local"
       paths:
         - path: /
           pathType: Prefix
+  tls: []
+
+env:
+  HOSTNAME: "web.garden-app.local"
+  API_URL: "http://garden-api:8080"
+
+resources:
+  limits:
+    memory: 300Mi
+    cpu: 300m
+  requests:
+    memory: 128Mi
+    cpu: 100m
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

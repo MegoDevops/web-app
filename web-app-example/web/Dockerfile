@@ -1,25 +1,29 @@
-# استخدم base image مناسب للـ Node.js
-FROM node:10.24.1
+FROM node:14-alpine as build-stage
 
-# أنشئ مجلد العمل
 WORKDIR /app
 
-# انسخ package.json و package-lock.json أو yarn.lock لو موجود
+# Copy package files
 COPY package*.json ./
-# COPY yarn.lock ./   # لو بتستخدم Yarn
-
-# ثبت الـ dependencies
 RUN npm install
-# RUN yarn install   # لو بتستخدم Yarn
 
-# انسخ باقي ملفات المشروع
+# Copy source code
 COPY . .
 
-# كشف البورت اللي هيتشغل عليه
-EXPOSE 8081
+# Build the app (if needed - adjust based on your web framework)
+RUN npm run build || echo "No build script, serving directly"
 
-# ضع environment variables لو محتاج
-ENV NODE_ENV=production
+FROM node:14-alpine as production-stage
 
-# أمر تشغيل التطبيق
-CMD ["npm", "run", "serve"]
+WORKDIR /app
+
+# Copy built app or source files
+COPY --from=build-stage /app .
+
+# Create non-root user
+RUN adduser -D appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+
+# Adjust this based on your web framework
+CMD ["npm", "start"] || ["node", "server.js"]

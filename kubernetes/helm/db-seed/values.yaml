@@ -1,0 +1,11 @@
+# Default values for db-seed
+image:
+  repository: postgres
+  tag: "12.4-alpine"
+  pullPolicy: IfNotPresent
+
+database:
+  host: "postgresql"
+  name: "postgres"
+  user: "postgres"
+  password: "postgres"
