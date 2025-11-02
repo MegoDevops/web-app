@@ -66,75 +66,7 @@ pipeline {
         }
       }
     }
-
-    stage('Create Dockerfiles') {
-      steps {
-        script {
-          // Create API Dockerfile if it doesn't exist
-          if (!fileExists('web-app-example/api/Dockerfile')) {
-            writeFile file: 'web-app-example/api/Dockerfile', text: '''FROM python:3.9-slim
-
-WORKDIR /app
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY app.py .
-COPY test.py .
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8080
-
-CMD ["python", "app.py"]'''
-            echo "✅ Created API Dockerfile"
-          }
-
-          // Create Web Dockerfile if it doesn't exist
-          if (!fileExists('web-app-example/web/Dockerfile')) {
-            writeFile file: 'web-app-example/web/Dockerfile', text: '''FROM node:14-alpine
-
-WORKDIR /app
-
-# Copy package files first for better caching
-COPY package*.json ./
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Create non-root user
-RUN addgroup -g 1000 appuser && \\
-    adduser -S -u 1000 -G appuser appuser && \\
-    chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8080
-
-# Use a simple HTTP server for the web app
-CMD ["npx", "http-server", "-p", "8080"]'''
-            echo "✅ Created Web Dockerfile"
-          }
-
-          // Update requirements.txt if needed
-          if (fileExists('web-app-example/api/requirements.txt')) {
-            sh '''
-              cd web-app-example/api
-              # Ensure psycopg2-binary is used instead of psycopg2
-              if grep -q "psycopg2" requirements.txt && ! grep -q "psycopg2-binary" requirements.txt; then
-                sed -i 's/psycopg2/psycopg2-binary/' requirements.txt
-                echo "Updated requirements.txt to use psycopg2-binary"
-              fi
-            '''
-          }
-        }
-      }
-    }
-
+    
     stage('SonarQube Analysis') {
       steps {
         dir('web-app-example') {
