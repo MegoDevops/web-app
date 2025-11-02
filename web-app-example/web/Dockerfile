@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source code including vue.config.js
+# Copy source code
 COPY . .
 
 # Build the Vue.js app for production
@@ -29,9 +29,8 @@ RUN npm install express cors axios
 # Create production server file
 COPY server.js ./
 
-# Create non-root user
-RUN addgroup -g 1000 appuser && \
-    adduser -S -u 1000 -G appuser appuser && \
+# Create non-root user with automatic UID/GID
+RUN adduser -S -D -H appuser && \
     chown -R appuser:appuser /app
 
 USER appuser
