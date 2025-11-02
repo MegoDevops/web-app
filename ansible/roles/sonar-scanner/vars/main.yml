@@ -1,0 +1,4 @@
+---
+sonar_scanner_version: "5.0.1.3006"
+sonar_scanner_install_dir: "/opt/sonar-scanner"
+sonar_scanner_download_url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-25.10.0.114319.zip"

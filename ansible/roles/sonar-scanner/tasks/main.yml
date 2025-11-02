@@ -1,0 +1,47 @@
+---
+- name: Ensure unzip is installed
+  apt:
+    name: unzip
+    state: present
+  become: true
+
+- name: Download Sonar Scanner CLI
+  get_url:
+    url: "{{ sonar_scanner_download_url }}"
+    dest: "/tmp/sonar-scanner-{{ sonar_scanner_version }}-linux.zip"
+    mode: '0644'
+  become: true
+
+- name: Extract Sonar Scanner
+  unarchive:
+    src: "/tmp/sonar-scanner-{{ sonar_scanner_version }}-linux.zip"
+    dest: "/opt/"
+    remote_src: true
+  become: true
+
+- name: Rename Sonar Scanner directory
+  command: mv /opt/sonar-scanner-{{ sonar_scanner_version }}-linux {{ sonar_scanner_install_dir }}
+  args:
+    removes: "/opt/sonar-scanner-{{ sonar_scanner_version }}-linux"
+  become: true
+
+- name: Add sonar-scanner to PATH
+  lineinfile:
+    path: /etc/profile.d/sonar-scanner.sh
+    line: 'export PATH={{ sonar_scanner_install_dir }}/bin:$PATH'
+    create: yes
+  become: true
+
+- name: Ensure sonar-scanner.sh is executable
+  file:
+    path: /etc/profile.d/sonar-scanner.sh
+    mode: '0755'
+  become: true
+
+- name: Verify Sonar Scanner installation
+  shell: "{{ sonar_scanner_install_dir }}/bin/sonar-scanner --version"
+  register: sonar_scanner_version_output
+  changed_when: false
+
+- debug:
+    msg: "✅ Sonar Scanner installed successfully: {{ sonar_scanner_version_output.stdout }}"
