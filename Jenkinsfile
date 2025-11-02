@@ -66,13 +66,13 @@ pipeline {
         }
       }
     }
-    
+
     stage('SonarQube Analysis') {
       steps {
         dir('web-app-example') {
           withSonarQubeEnv('SonarQube') {
             sh '''
-                /opt/sonar-scanner/bin/sonar-scanner \\
+                /opt/sonarqube-25.10.0.114319 \\
                   -Dsonar.projectKey=garden-web-app \\
                   -Dsonar.sources=. \\
                   -Dsonar.host.url=http://localhost:9000 \\
