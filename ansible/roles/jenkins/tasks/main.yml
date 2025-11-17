@@ -50,13 +50,13 @@
     state: present
     executable: pip3
 
-- name: Remove AWS CLI v1 if exists
+- name: Remove AWS CLI v1 
   apt:
     name: awscli
     state: absent
   ignore_errors: true
 
-- name: Install AWS CLI v2 (correct method)
+- name: Install AWS CLI v2 
   shell: |
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip -q awscliv2.zip
