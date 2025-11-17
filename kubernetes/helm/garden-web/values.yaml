@@ -2,8 +2,8 @@
 replicaCount: 1
 
 image:
-  repository: ""  # Will be set in Jenkins
-  tag: "latest"   # Will be set in Jenkins
+  repository: ""  
+  tag: "latest"   
   pullPolicy: IfNotPresent
 
 service:
