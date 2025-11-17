@@ -44,4 +44,4 @@
   changed_when: false
 
 - debug:
-    msg: "✅ Sonar Scanner installed successfully: {{ sonar_scanner_version_output.stdout }}"
+    msg: " Sonar Scanner installed successfully: {{ sonar_scanner_version_output.stdout }}"
